@@ -164,6 +164,159 @@
     
 
     <script src="js/plugins.js"></script>
-    
+    <script>
+        $("#footer").load("footer.html"); 
+    document.onclick = inputChange;
+
+    function inputChange(e) { 
+        if (document.getElementsByClassName("navbar-collapse")[0].classList.contains("show")){
+            
+            document.getElementsByClassName("navbar-toggler")[0].click();
+        }
+    }
+
+    function detectMob() {
+        return  ( window.innerWidth <= 800 );
+    }
+        function changePage(pageToken, action){
+            if (pageToken != ""){
+                displayVideos(pageToken);
+                page = parseInt(document.getElementById("pageNo1").innerText);
+                if (action == "next")
+                {
+                    page = page + 1;
+
+                }
+                else{
+                    page = page - 1;
+                }
+                document.getElementById("pageNo1").innerText = page;
+                document.getElementById("pageNo2").innerText = page;
+                document.getElementsByClassName("youtube")[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+        function changeIframeVideo(id, scrollView){
+            iframe = document.getElementsByClassName('iframe');
+            var iframeElement = document.createElement('iframe');
+            iframeElement.setAttribute("class", "responsive-iframe");
+            iframeElement.setAttribute("allow", "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture");
+            iframeElement.setAttribute("allowfullscreen", "")
+            iframeElement.src = "https://www.youtube.com/embed/" + id;
+            iframe[0].innerHTML = "";
+            iframe[0].append(iframeElement);
+            if (scrollView)
+                iframe[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function displayVideos(pageToken){
+            var settings = {
+                "url": "https://youtube.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=15&playlistId=UU9Usscd_2B1X5zT3Oiuc_6g&key=AIzaSyDlkWw280sRq59yrUvMh2MCOFQDH60EWTk",
+                "method": "GET",
+                "timeout": 0,
+            };
+            if (pageToken !== ""){
+                settings["url"]+= `&pageToken=${pageToken}`
+            }
+            isMobile = detectMob();
+            document.getElementsByClassName("youtube")[0].innerHTML = "";
+            document.getElementsByClassName("tm-btn-next")[0].hidden = true;
+            document.getElementsByClassName("tm-btn-prev")[0].hidden = true;
+            document.getElementsByClassName("tm-btn-next2")[0].hidden = true;
+            document.getElementsByClassName("tm-btn-prev2")[0].hidden = true;
+            $.ajax(settings).done(function (response) {
+            console.log(response);
+
+            if (pageToken === ""){
+                changeIframeVideo(response["items"][0]["snippet"]["resourceId"]["videoId"], false);
+            }
+
+            document.getElementById("count").innerText = Math.ceil(response["pageInfo"]["totalResults"]/15);
+            document.getElementById("count2").innerText = Math.ceil(response["pageInfo"]["totalResults"]/15);
+            if (response["nextPageToken"] != undefined)
+            {
+                document.getElementsByClassName("tm-btn-next")[0].hidden = false;
+                document.getElementsByClassName("tm-btn-next2")[0].hidden = false;
+                document.getElementsByClassName("tm-btn-next")[0].setAttribute("onclick", `changePage("${response["nextPageToken"]}", "next")`);
+                document.getElementsByClassName("tm-btn-next2")[0].setAttribute("onclick", `changePage("${response["nextPageToken"]}", "next")`);
+            }
+            if (response["prevPageToken"] != undefined)
+            {
+                document.getElementsByClassName("tm-btn-prev")[0].hidden = false;
+                document.getElementsByClassName("tm-btn-prev2")[0].hidden = false;
+                document.getElementsByClassName("tm-btn-prev")[0].setAttribute("onclick", `changePage("${response["prevPageToken"]}", "prev")`);
+                document.getElementsByClassName("tm-btn-prev2")[0].setAttribute("onclick", `changePage("${response["prevPageToken"]}", "prev")`);
+            }
+            
+            response["items"].forEach(element => {
+                var elem = document.createElement('div');
+                elem.setAttribute("class", "col-xl-4 col-lg-4 col-md-4 col-sm-4 col-4 mb-5 video");
+                videoId = "changeIframeVideo('" + element["snippet"]["resourceId"]["videoId"] + "', true)";
+                elem.setAttribute("onclick", videoId);
+                var figure = document.createElement('figure');
+                figure.setAttribute("class", "tm-video-item");
+                var image = document.createElement('img');
+                if (element["snippet"]["thumbnails"]["maxres"])
+                    image.src = element["snippet"]["thumbnails"]["maxres"]["url"];
+                else 
+                    image.src = element["snippet"]["thumbnails"]["medium"]["url"];
+                image.setAttribute("class", "img-fluid");
+                image.setAttribute("alt", element["snippet"]["title"]);
+                var figcaption = document.createElement('figcaption');
+                figcaption.setAttribute("class", "d-flex align-items-center justify-content-center");
+                var span2 = document.createElement('span');
+                span2.setAttribute("class", "youtube-icon");
+                var i = document.createElement('img');
+                i.src = "img/youtube.png"
+                i.setAttribute("alt", "Andyreloads youtube assassin's creed valhalla content creator")
+
+                var div = document.createElement('div');
+                div.setAttribute("class", "d-flex justify-content-between tm-text-gray");
+                var span = document.createElement('span');
+                if (isMobile){
+                    title = element["snippet"]["title"];
+                    if (title.indexOf("-") != -1)
+                        title = title.slice(0, title.indexOf("-"));
+                    if (title.indexOf("–"))
+                        title = title.slice(0, title.indexOf("–"));
+                    span.innerText = title;
+                }
+                else{
+                    index = element["snippet"]["title"].indexOf("(")
+                    if (index == -1)
+                        title = element["snippet"]["title"];
+                    else
+                        title = element["snippet"]["title"].slice(0, index);
+                    span.innerText = title;
+                }
+                span2.append(i);
+                figcaption.append(span2);
+                figure.append(image);
+                figure.append(figcaption);
+                div.append(span);
+                elem.append(figure);
+                elem.append(div);
+                document.getElementsByClassName("youtube")[0].appendChild(elem);
+            });
+            });
+        }
+        $(window).on("load", function() {
+            displayVideos("");
+            window.scrollTo(0,0);
+            // document.getElementsByClassName("image-subscribe")[0].classList.add("img-subscribe");
+            $('body').addClass('loaded');
+
+            // to keep heroku alive
+            var requestOptions = {
+                method: 'GET',
+                redirect: 'follow'
+            };
+            fetch(`https://andyreload.herokuapp.com/leaderboard?page=0`, requestOptions)
+                .then(response => response.text())
+                .then(result => {
+                    localStorage.setItem("0", result);
+                })
+                .catch(error => console.log('error', error));
+        });
+    </script>
 </body>
 </html>

@@ -1,31 +1,52 @@
+// function changePage(action){
+//     var pageNo = parseInt(document.getElementById("pageNo1").innerText);
+    
+//     if (action == "next")
+//     {
+//         pageNo = pageNo + 1;
+//         addData(pageNo);
+//         document.getElementsByClassName("tm-btn-prev")[0].hidden = false;
+//         document.getElementsByClassName("tm-btn-prev2")[0].hidden = false;
+//     }
+//     else if (pageNo > 1){
+//         pageNo = pageNo - 1;
+//         addData(pageNo);
+//         document.getElementsByClassName("tm-btn-next")[0].hidden = false;
+//         document.getElementsByClassName("tm-btn-next2")[0].hidden = false;
+//         if (pageNo == 1){
+//             document.getElementsByClassName("tm-btn-prev")[0].hidden = true;
+//             document.getElementsByClassName("tm-btn-prev2")[0].hidden = true;
+//         }
+//     }
+
+//     document.getElementById("pageNo1").innerText = pageNo;
+//     document.getElementById("pageNo2").innerText = pageNo;
+//     document.getElementsByClassName("scrollIntoView")[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+// }
+
 function loadMore(){
     var pageNo = parseInt(document.getElementById("pageNo1").innerText);
     addData(pageNo);
 }
 
-async function updateLocalStorage(page){
+async function updateLocalStorage(page, updateHTML=false){
     var requestOptions = {
         method: 'GET',
         redirect: 'follow'
     };
-    var prevPage = parseInt(localStorage.getItem("page"));
 
     fetch(`https://andyreload.herokuapp.com/leaderboard?page=${page}`, requestOptions)
         .then(response => response.text())
         .then(result => {
             localStorage.setItem(page, result);
+            if (updateHTML){
+                updateHTMLData(0, JSON.parse(result));
+            }
         })
         .catch(error => console.log('error', error));
-    return true;
 }
 
-function addData(page){
-    var data = JSON.parse(localStorage.getItem(page));
-    // var page = parseInt(localStorage.getItem("page"));
-    console.log(data)
-    var table_ul = document.getElementById("table-ul");
-    // table_ul.innerHTML = "";
-
+function updateHTMLData(page, data){
     if (data["players"].length < 100){
         document.getElementsByClassName("tm-btn-next")[0].hidden = true;
         // document.getElementsByClassName("tm-btn-next2")[0].hidden = true;
@@ -130,22 +151,11 @@ function addData(page){
         //everything pushed in table;
         table_ul.appendChild(row_div);
     }
+}
 
-    function updateRoleRewards(item, index){
-        var roleElem = document.getElementById("role-rewards");
-
-        var div = document.createElement("div");
-        div.setAttribute("class", "role-row");
-        var levelDiv = document.createElement("div");
-        levelDiv.setAttribute("class", "level");
-        var roleDiv = document.createElement("div");
-        roleDiv.setAttribute("class", `role color-${item["role"]["color"]}`);
-        levelDiv.innerText = `Level ${item["rank"]}`;
-        roleDiv.innerText = item["role"]["name"];
-        div.appendChild(levelDiv);
-        div.appendChild(roleDiv);
-        roleElem.appendChild(div);
-    }
+function addData(page){
+    var data = JSON.parse(localStorage.getItem(page));
+    updateHTMLData(page, data);
 }
 
 function discordData(){
@@ -169,12 +179,6 @@ function discordData(){
 
 window.onload = function(){
     document.getElementsByClassName("tm-btn-next")[0].hidden = false;
-    // document.getElementsByClassName("tm-btn-prev")[0].hidden = true;
-    // document.getElementsByClassName("tm-btn-next2")[0].hidden = false;
-    // document.getElementsByClassName("tm-btn-prev2")[0].hidden = true;
-    localStorage.setItem("page", 0);
+    updateLocalStorage(0, true);
     discordData();
-    updateLocalStorage(0).then(result => {
-        addData(0);
-    });
 }

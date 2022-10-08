@@ -1,29 +1,3 @@
-// function changePage(action){
-//     var pageNo = parseInt(document.getElementById("pageNo1").innerText);
-    
-//     if (action == "next")
-//     {
-//         pageNo = pageNo + 1;
-//         addData(pageNo);
-//         document.getElementsByClassName("tm-btn-prev")[0].hidden = false;
-//         document.getElementsByClassName("tm-btn-prev2")[0].hidden = false;
-//     }
-//     else if (pageNo > 1){
-//         pageNo = pageNo - 1;
-//         addData(pageNo);
-//         document.getElementsByClassName("tm-btn-next")[0].hidden = false;
-//         document.getElementsByClassName("tm-btn-next2")[0].hidden = false;
-//         if (pageNo == 1){
-//             document.getElementsByClassName("tm-btn-prev")[0].hidden = true;
-//             document.getElementsByClassName("tm-btn-prev2")[0].hidden = true;
-//         }
-//     }
-
-//     document.getElementById("pageNo1").innerText = pageNo;
-//     document.getElementById("pageNo2").innerText = pageNo;
-//     document.getElementsByClassName("scrollIntoView")[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
-// }
-
 function loadMore(){
     var pageNo = parseInt(document.getElementById("pageNo1").innerText);
     addData(pageNo);
@@ -41,6 +15,8 @@ async function updateLocalStorage(page, updateHTML=false){
             localStorage.setItem(page, result);
             if (updateHTML){
                 updateHTMLData(0, JSON.parse(result));
+                document.body.classList.add('loaded');
+                document.body.classList.remove('loading');
             }
         })
         .catch(error => console.log('error', error));
@@ -61,26 +37,36 @@ function updateHTMLData(page, data){
     //     data["role_rewards"].forEach(updateRoleRewards);
     // }
     function updateTableRow(item, index){
+        pageNumber = 100*page + index + 1;
         var table_ul = document.getElementById("table-ul");
         //row
         var row_div = document.createElement("div");
-        row_div.setAttribute("class", "row table-row");
+
+        var classList = "row table-row";
+
+        
+        if (pageNumber%100 == 0){
+            classList = "row table-row no-border";
+        }
+
+        row_div.setAttribute("class", classList);
         
         //rank div
         var rank_div = document.createElement("div");
         rank_div.setAttribute("class", "col-md-1 pd-mobl board-li");
         var li = document.createElement("li");
-        pageNumber = 100*page + index + 1;
+
         if (pageNumber < 4){
-            images = ["gold", "silver", "bronze"];
+            images = ["gold_ar", "silver_ar", "bronze_ar"];
             img_link = `./img/${images[pageNumber-1]}.png`
             var img = document.createElement("img");
-            img.setAttribute("class", "medal round-image");
+            img.setAttribute("class", "medal square-img");
             img.setAttribute("src", img_link);
             li.appendChild(img)
         }
         else {
             li.innerText = pageNumber;
+            li.setAttribute("class", "numeric-index")
         }
 
         rank_div.appendChild(li);
@@ -155,6 +141,8 @@ function updateHTMLData(page, data){
 
 function addData(page){
     var data = JSON.parse(localStorage.getItem(page));
+    var noBorderElem = document.getElementsByClassName("no-border");
+    noBorderElem[0].classList.remove("no-border");
     updateHTMLData(page, data);
 }
 
@@ -175,6 +163,14 @@ function discordData(){
         members.innerText = data["approximate_member_count"];
     })
     .catch(error => console.log('error', error));
+}
+
+function inputChange(e) { 
+    if (document.getElementsByClassName("navbar-collapse")[0].classList.contains("show")){
+        
+        document.getElementsByClassName("navbar-toggler")[0].click();
+        // document.getElementsByClassName("closebtn").hidden = true;
+    }
 }
 
 window.onload = function(){
